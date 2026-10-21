@@ -1,0 +1,31 @@
+# Collected data — never committed. The registry is the shared state, not the frames.
+raw/
+filtered/
+_videos/
+hardneg/
+video_index/
+*.mp4
+*.mkv
+*.webm
+*.avi
+*.mov
+
+# Models
+*.pt
+*.engine
+*.onnx
+
+# Registry write-in-progress files, swept automatically but never committed
+.registry-*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store

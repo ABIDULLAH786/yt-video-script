@@ -1,0 +1,21 @@
+# yt-video-script — collection and triage
+#
+# System packages, not pip: ffmpeg, nodejs
+#   sudo apt install ffmpeg nodejs
+
+# YouTube search and download.
+yt-dlp==2026.9.26
+
+# Needed only by --cookies-from-browser on Linux: Chrome/Brave/Edge keep their
+# cookie encryption key in the GNOME keyring, and yt-dlp reads it through this.
+# Without it the flag fails with "Failed to decrypt with DPAPI/keyring".
+secretstorage==3.5.0
+
+# ai_triage.py / model_frames.py gate — the drone detector.
+ultralytics==8.3.0
+
+# model_frames.py gate — CLIP, the second opinion. Gating on our own detector
+# alone threw away 81% of what it rejected, measured on 150 sampled frames.
+torch==2.5.1
+transformers==4.46.0
+pillow==11.0.0
