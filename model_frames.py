@@ -207,6 +207,19 @@ def build_video_index(out: Path) -> dict:
     return idx
 
 
+def _video_size(path: Path):
+    """(width, height) of a downloaded file, or None if ffprobe cannot tell."""
+    r = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "v:0",
+         "-show_entries", "stream=width,height", "-of", "csv=p=0:s=x", str(path)],
+        capture_output=True, text=True)
+    try:
+        w, h = r.stdout.strip().split("\n")[0].split("x")[:2]
+        return int(w), int(h)
+    except (ValueError, IndexError):
+        return None
+
+
 def _probe_candidates(term, want, oversample, min_dur, max_dur, js_runtime,
                       cookies_from=None, remote_components=None,
                       sleep_requests=0.0, timeout=None):
@@ -469,8 +482,19 @@ def cmd_fetch(args):
                     cmd += ["--sleep-interval", str(args.sleep_interval),
                             "--max-sleep-interval",
                             str(max(args.sleep_interval * 3, args.sleep_interval))]
+                # NO low-resolution fallback. The old chain ended in "/b",
+                # best-anything, and YouTube's muxed streams top out at 360p —
+                # so whenever the adaptive formats were briefly unavailable it
+                # silently took 360p. Measured 2026-10-22: two f1 videos came
+                # down as 640x360 and gave 632 unusable frames, while both were
+                # available at 1080p and 4K all along.
+                #
+                # Asking only for formats at or above the minimum means yt-dlp
+                # errors with "Requested format is not available" instead, which
+                # is recorded as a failure and skipped — the right outcome.
+                minspec = f"[width>={args.min_width}][height>={args.min_height}]"
                 cmd += [
-                    "-f", "bv*[height<=1080]/b[height<=1080]/bv*/b",
+                    "-f", f"bv*{minspec}[height<=1080]/bv*{minspec}/b{minspec}",
                     "--no-warnings",
                     "-o", str(vdir / "%(id)s.%(ext)s"),
                     f"https://www.youtube.com/watch?v={vid}",
@@ -509,6 +533,21 @@ def cmd_fetch(args):
                     print(f"        [{vid}] no file after download", file=sys.stderr)
                     registry.record_failure(vid, f"{fam}{args.variant}",
                                             "no file after download", slug(model))
+                    continue
+
+                # Verify the FILE, not the format we asked for. The selector is
+                # a request; this is the fact. A file below the minimum is
+                # thrown away before any frames are cut, because frames are
+                # cheap to make and expensive to review.
+                wh = _video_size(video)
+                if wh and (wh[0] < args.min_width or wh[1] < args.min_height):
+                    print(f"        [{vid}] {wh[0]}x{wh[1]} is below "
+                          f"{args.min_width}x{args.min_height} — discarded",
+                          file=sys.stderr)
+                    video.unlink(missing_ok=True)
+                    registry.record_failure(
+                        vid, f"{fam}{args.variant}",
+                        f"resolution {wh[0]}x{wh[1]} below minimum", slug(model))
                     continue
 
                 stem = f"{slug(model)}_t{ti}_{video.stem}"
@@ -915,6 +954,12 @@ def main():
                         "the filter eats the quota — see _probe_candidates()")
     f.add_argument("--fps", type=float, default=0.5)
     f.add_argument("--max-side", type=int, default=1280)
+    f.add_argument("--min-width", type=int, default=1280,
+                   help="reject a video whose source is narrower than this. "
+                        "Frames are never upscaled, so a 640x360 source gives "
+                        "640x360 frames whatever --max-side says.")
+    f.add_argument("--min-height", type=int, default=720,
+                   help="as --min-width, for height")
     f.add_argument("--min-duration", type=int, default=30,
                    help="seconds; skips shorts and clip-farm stubs")
     f.add_argument("--max-duration", type=int, default=900,

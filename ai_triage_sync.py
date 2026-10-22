@@ -29,6 +29,13 @@ def main():
     ap.add_argument("--apply", action="store_true", help="actually delete (default is a dry run)")
     ap.add_argument("--allow-empty", action="store_true",
                     help="permit syncing a band whose annotated/ folder is now completely empty")
+    ap.add_argument("--bands", default="",
+                    help="only these bands, comma separated (a name or just its "
+                         "leading number, e.g. '3' or '1,2'). Use it when one "
+                         "band's review is finished and the others are still "
+                         "being worked on or are still to arrive — syncing a "
+                         "band against a stale annotated/ deletes images the "
+                         "newer review would have kept.")
     args = ap.parse_args()
 
     out = Path(args.out)
@@ -38,6 +45,19 @@ def main():
 
     rows = list(csv.DictReader(open(man)))
     bands = sorted({r["band"] for r in rows})
+
+    if args.bands:
+        want = {b.strip() for b in args.bands.split(",") if b.strip()}
+        chosen = [b for b in bands
+                  if b in want or b.split("_", 1)[0] in want]
+        missing = want - {b for b in chosen} - {b.split("_", 1)[0] for b in chosen}
+        if missing:
+            sys.exit(f"no such band(s): {', '.join(sorted(missing))}\n"
+                     f"available: {', '.join(bands)}")
+        print(f"bands: {', '.join(chosen)} "
+              f"({len(bands) - len(chosen)} other band(s) left untouched)\n")
+        bands = chosen
+        rows = [r for r in rows if r["band"] in set(bands)]
 
     # guard: an empty annotated/ almost always means a mistake, not a decision
     for b in bands:
