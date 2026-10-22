@@ -48,6 +48,7 @@ Run from this directory. Needs: yt-dlp, ffmpeg, ultralytics (for `gate`).
 from __future__ import annotations
 
 import argparse
+import collections
 import json
 import re
 import shutil
@@ -323,6 +324,38 @@ def cmd_fetch(args):
     print(f"  on disk : {len(video_index):,} videos\n", flush=True)
 
     planned = [(f, m) for f in fams for m in models[f]]
+    if args.max_per_family:
+        # A per-CATEGORY budget, which --top-up cannot express: that one is per
+        # model per term, so "2" across 22 models and 3 terms is up to 132
+        # videos, not 2.
+        #
+        # Thinnest model first. With a small budget the order decides who gets
+        # it, and spending it on the models with the fewest frames fills the
+        # gaps rather than topping up whichever aircraft happens to be listed
+        # first.
+        #
+        # Counted from the REGISTRY, not from the disk. The frames are deleted
+        # as each category is triaged — on this corpus only two of eight
+        # categories still have a raw folder — so an on-disk count reads zero
+        # for almost everything and the sort does nothing at all.
+        have = collections.Counter()
+        for e in registry.data["videos"].values():
+            if e.get("status") == "processed":
+                have[(e.get("category") or "", e.get("model") or "")] += \
+                    int(e.get("frames") or 0)
+        def collected(fam_model):
+            f, m = fam_model
+            key = (f"{f}{args.variant}", slug(m))
+            return have.get(key, 0) or _count_images(_model_dir(out, f, m, args.variant))
+        ordered = []
+        for f in fams:
+            ordered += sorted(((f, m) for m in models[f]), key=collected)
+        planned = ordered
+        print("thinnest models first (registry frame counts):")
+        for f in fams:
+            first = [m for ff, m in ordered if ff == f][:3]
+            print(f"  {f}: {', '.join(f'{m} ({collected((f, m)):,})' for m in first)}")
+        print()
     mode = (f"TOP-UP: +{args.top_up} new video(s) per term for every model "
             f"(already-downloaded videos are skipped)"
             if args.top_up else
@@ -331,10 +364,14 @@ def cmd_fetch(args):
           f"({len(planned) * len(MODEL_TEMPLATES)} searches) — {mode}\n")
 
     done_n = skipped = 0
+    fam_new: dict[str, int] = {}
     for idx, (fam, model) in enumerate(planned, 1):
+        if args.max_per_family and fam_new.get(fam, 0) >= args.max_per_family:
+            continue
         mdir = _model_dir(out, fam, model, args.variant)
         marker = mdir / ".done"
-        if marker.exists() and not args.no_resume and not args.top_up:
+        if marker.exists() and not args.no_resume and not args.top_up \
+                and not args.max_per_family:
             skipped += 1
             print(f"[{idx}/{len(planned)}] {fam}/{model} — done, skipping")
             continue
@@ -355,6 +392,8 @@ def cmd_fetch(args):
 
         any_candidates = False
         for ti, term in enumerate(search_terms(model)):
+            if args.max_per_family and fam_new.get(fam, 0) >= args.max_per_family:
+                break
             vdir = workdir / fam / slug(model) / f"t{ti}"
             vdir.mkdir(parents=True, exist_ok=True)
             print(f"    [search {ti+1}/{len(search_terms(model))}] {term}",
@@ -500,6 +539,11 @@ def cmd_fetch(args):
                                 frames=n_frames, title=title,
                                 duration_s=dur, term=ti)
                 got_new += 1
+                fam_new[fam] = fam_new.get(fam, 0) + 1
+                if args.max_per_family and fam_new[fam] >= args.max_per_family:
+                    print(f"    -> {fam} budget reached "
+                          f"({args.max_per_family} new video(s))", flush=True)
+                    break
 
                 if not args.keep_video:
                     video.unlink(missing_ok=True)
@@ -903,6 +947,12 @@ def main():
                    help="the global video record. Every id in it is skipped, "
                         "whichever category asks for it, and every new video is "
                         "written to it as soon as its frames are cut.")
+    f.add_argument("--max-per-family", type=int, default=0, metavar="N",
+                   help="stop a category once N NEW videos have been "
+                        "downloaded for it. A per-category budget, which "
+                        "--top-up cannot express (that is per model per term). "
+                        "Models are visited thinnest-first so a small budget "
+                        "fills the gaps.")
     f.add_argument("--retry-failed", action="store_true",
                    help="also retry videos the registry has marked failed "
                         "(private, removed, geo-blocked). Off by default so a "

@@ -1,21 +1,31 @@
-# yt-video-script — collection and triage
+# Dataset collection scripts (model_frames.py, drone_families_dataset.py,
+# neo_dataset.py). Versions are what is installed and working as of 2026-09-17.
 #
-# System packages, not pip: ffmpeg, nodejs
-#   sudo apt install ffmpeg nodejs
+#   pip install -r data-fetching-scripts/requirements.txt
+#
+# ffmpeg must also be on PATH (frame extraction), and a JS runtime — node, deno
+# or bun — must be installed for yt-dlp to solve YouTube's challenges.
 
-# YouTube search and download.
-yt-dlp==2026.9.26
+# --- model_frames.py: YouTube -> frames -> drone gate -------------------
+yt-dlp==2026.8.19
+ultralytics==8.4.60          # the drone detector half of `gate`
+transformers==5.12.1         # CLIP, the second opinion in `gate`
+torch==2.12.0
+pillow==12.2.0
 
-# Needed only by --cookies-from-browser on Linux: Chrome/Brave/Edge keep their
-# cookie encryption key in the GNOME keyring, and yt-dlp reads it through this.
-# Without it the flag fails with "Failed to decrypt with DPAPI/keyring".
+# Chrome/Brave/Edge encrypt their cookie DB on Linux and yt-dlp cannot read it
+# without this. Needed for --cookies-from-browser, which is in turn needed once
+# YouTube starts answering "Sign in to confirm you're not a bot" — it does that
+# after a few hundred downloads from one IP.
 secretstorage==3.5.0
 
-# ai_triage.py / model_frames.py gate — the drone detector.
-ultralytics==8.3.0
+# --- dedupe ------------------------------------------------------------
+imagehash==4.3.2
 
-# model_frames.py gate — CLIP, the second opinion. Gating on our own detector
-# alone threw away 81% of what it rejected, measured on 150 sampled frames.
-torch==2.5.1
-transformers==4.46.0
-pillow==11.0.0
+# --- drone_families_dataset.py: image search (no longer the main path) --
+playwright==1.62.0           # also needs: playwright install chromium
+requests==2.34.2
+
+# icrawler is NOT installed and is only used by `scrape --engines bing`.
+# The browser path does not need it; install it only if you want that engine.
+# icrawler
