@@ -377,10 +377,23 @@ def cmd_fetch(args):
             first = [m for ff, m in ordered if ff == f][:3]
             print(f"  {f}: {', '.join(f'{m} ({collected((f, m)):,})' for m in first)}")
         print()
-    mode = (f"TOP-UP: +{args.top_up} new video(s) per term for every model "
-            f"(already-downloaded videos are skipped)"
-            if args.top_up else
-            f"{args.videos_per_term} videos per term")
+    # Say what the run will actually do, not what --videos-per-term alone says.
+    # With --max-per-model 1 the header used to announce "3 videos per term"
+    # while the run took one video per model, which reads as a bug.
+    if args.top_up:
+        mode = (f"TOP-UP: +{args.top_up} new video(s) per term for every model "
+                f"(already-downloaded videos are skipped)")
+    elif args.max_per_model or args.max_per_family:
+        parts = []
+        if args.max_per_model:
+            parts.append(f"at most {args.max_per_model} new video(s) per MODEL")
+        if args.max_per_family:
+            parts.append(f"at most {args.max_per_family} per CATEGORY")
+        cap = min(x for x in (args.max_per_family or 10**9,
+                              (args.max_per_model or 10**9) * len(planned)))
+        mode = f"{', '.join(parts)} — up to {cap} new video(s) in total"
+    else:
+        mode = f"{args.videos_per_term} videos per term"
     print(f"{len(planned)} models to collect "
           f"({len(planned) * len(MODEL_TEMPLATES)} searches) — {mode}\n")
 

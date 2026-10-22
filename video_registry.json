@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "updated_utc": "2026-10-22T10:43:03Z",
+  "updated_utc": "2026-10-22T10:52:01Z",
   "counts": {
-    "videos": 1386,
-    "processed": 1385,
+    "videos": 1387,
+    "processed": 1386,
     "failed": 1,
-    "frames": 408638,
+    "frames": 408735,
     "categories": 8
   },
   "categories": {
@@ -200,13 +200,14 @@
       ]
     },
     "f2_micro_selfie": {
-      "videos": 155,
-      "frames": 53676,
+      "videos": 156,
+      "frames": 53773,
       "urls": [
         "https://www.youtube.com/watch?v=-0N7eS_XRZU",
         "https://www.youtube.com/watch?v=-5UMgG73pvg",
         "https://www.youtube.com/watch?v=11Z7qJ4P9PE",
         "https://www.youtube.com/watch?v=1GPzJHJEP10",
+        "https://www.youtube.com/watch?v=1PNF4XveB2g",
         "https://www.youtube.com/watch?v=1TQ9iZi6ywI",
         "https://www.youtube.com/watch?v=1tnc0Vx3sXU",
         "https://www.youtube.com/watch?v=2KkYFGiN2Q0",
@@ -19458,6 +19459,27 @@
       "attempts": 1,
       "source": "youtube",
       "processed_utc": "2026-10-22T10:43:03Z"
+    },
+    "1PNF4XveB2g": {
+      "url": "https://www.youtube.com/watch?v=1PNF4XveB2g",
+      "category": "f2_micro_selfie",
+      "model": "zero_zero_hover_camera_hover_2",
+      "term": 0,
+      "title": "Most Advance Flying Camera Gadget |  HOVER 2 |",
+      "duration_s": 195,
+      "frames": 97,
+      "status": "processed",
+      "attempts": 1,
+      "source": "youtube",
+      "processed_utc": "2026-10-22T10:52:00Z"
+    }
+  },
+  "sweeps": {
+    "oct-round1": {
+      "f2_micro_selfie/zero_zero_hover_camera_hover_2": {
+        "videos": 1,
+        "utc": "2026-10-22T10:52:01Z"
+      }
     }
   }
 }
