@@ -541,7 +541,20 @@ def main():
                    help="force a category instead of inferring it")
     p.set_defaults(fn=cmd_seed)
 
-    args = ap.parse_args()
+    # A YouTube id may begin with "-", e.g. "-Crjhc_L600", and argparse reads
+    # any leading dash as a flag: `check -Crjhc_L600` died with "unrecognized
+    # arguments". Inserting the end-of-options marker lets ids be passed the
+    # obvious way instead of making the user remember to type "--" first.
+    argv = sys.argv[1:]
+    if "--" not in argv:
+        for i, a in enumerate(argv):
+            if a in ("check", "add", "remove"):
+                head, tail = argv[:i + 1], argv[i + 1:]
+                opts = [t for t in tail if t.startswith("--")]
+                if not opts:
+                    argv = head + ["--"] + tail
+                break
+    args = ap.parse_args(argv)
     args.fn(args)
 
 
