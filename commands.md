@@ -13,6 +13,87 @@ source ../.venv/bin/activate
 
 ---
 
+## The commands in use now (October 2026)
+
+**Never pass `--cookies-from-browser` to `fetch`.** YouTube runs a SABR-only
+streaming experiment on signed-in accounts: with cookies attached the adaptive
+formats arrive with no URL and are dropped, leaving 640x360 as the only format
+offered. Measured on four videos — 640x360 with cookies, 1920x1080 without.
+Downloads now refuse anything under 1280x720, so with cookies every download
+fails with "Requested format is not available". Use the pacing flags against
+rate-limiting instead.
+
+### One new video for every aircraft in a category
+
+```bash
+./model_frames.py fetch --families 1 --sweep oct-round1 \
+    --max-per-family 30 --max-per-model 1 \
+    --min-duration 180 --sleep-requests 2 --sleep-interval 5
+```
+
+Re-issue the identical line after a Ctrl-C and it continues from the model it
+stopped at. To go round again from the first model, add `--restart-sweep`.
+
+### Three videos from one aircraft, the thinnest first
+
+```bash
+./model_frames.py fetch --families 1 --max-per-family 3 \
+    --min-duration 180 --sleep-requests 2 --sleep-interval 5
+```
+
+### Budgets — these are three different things
+
+| flag | means |
+|---|---|
+| `--max-per-family N` | stop the CATEGORY after N new videos. With nothing else set, all N come from the first model that has them |
+| `--max-per-model N` | stop a MODEL after N, then move to the next one |
+| `--top-up N` | N new videos per model **per search term**, so 3 terms x 22 models x N |
+
+`--max-per-family 3` alone gave 3 videos from one model and left the other 21
+untouched. Pair it with `--max-per-model 1` to spread the same budget across
+three aircraft, or set the family budget above the model count to sweep them
+all.
+
+### `--sweep` — the durable resume
+
+A sweep is one pass over a category's models. Each finished model is recorded
+**in `video_registry.json`**, not as a `.done` file in the model folder, because
+those folders are deleted once their frames move into the filtered set — which
+is exactly when a `.done` marker would disappear.
+
+```bash
+--sweep oct-round1     # record progress under this name, skip what is done
+--restart-sweep        # forget the progress, begin at the first model again
+```
+
+`--restart-sweep` re-downloads nothing: it only forgets which *models* were
+visited. Every video already collected stays in the registry and is still
+skipped, so a second round naturally finds different videos. One sweep name can
+cover several categories at once (`--families 1,2,3,4,5,6`).
+
+### Resolution
+
+`--min-width 1280 --min-height 720` are the defaults. The format selector asks
+only for streams at or above them with no low fallback, and the downloaded file
+is then measured with ffprobe before any frames are cut — the selector is a
+request, the file is the fact. Frames are never upscaled, so `--max-side 1280`
+cannot rescue a 640-wide source.
+
+### The registry
+
+`video_registry.json` holds every video ever processed. Before any download
+`fetch` asks whether that id has been seen **by any category**, and skips it if
+so. Commit and push it after a collection run; it is shared state.
+
+```bash
+./video_registry.py stats                       # counts per category
+./video_registry.py check <url-or-id> [...]     # would this be skipped?
+./video_registry.py list --category f1_folding_quad
+./video_registry.py remove <url-or-id>          # collect it again
+```
+
+---
+
 ## The pipeline
 
 ```
@@ -72,7 +153,11 @@ python model_frames.py fetch --families f6_heavy_lift \
 | `--js-runtime` | `node` | yt-dlp needs one since 2025.11.12, else YouTube 403s |
 | `--keep-video` | off | keep the mp4s (they are deleted after framing) |
 | `--top-up N` | off | revisit every model, add N new videos per term (see above) |
-| `--cookies-from-browser` | off | `chrome`\|`brave`\|`edge` — needed once YouTube rate-limits |
+| `--cookies-from-browser` | off | **do not use** — caps every download at 640x360, see the SABR note at the top |
+| `--min-width` / `--min-height` | `1280` / `720` | refuse a source smaller than this |
+| `--sweep NAME` | off | record finished models in the registry so a run resumes |
+| `--max-per-model N` | off | stop a model after N new videos |
+| `--max-per-family N` | off | stop a category after N new videos |
 | `--sleep-requests` | `0` | seconds between yt-dlp HTTP requests (use 2) |
 | `--sleep-interval` | `0` | min seconds between downloads, max is 3x (use 8) |
 | `--no-resume` | off | ignore `.done` **and** the per-video check — redownloads everything |
@@ -126,9 +211,11 @@ retried on the next run rather than silently skipped forever.
 
 ```bash
 python model_frames.py fetch --families f7_fixed_wing_vtol \
-  --cookies-from-browser chrome \
   --sleep-requests 2 --sleep-interval 8 --delay 5
 ```
+
+> **Cookies were removed from this line.** `--cookies-from-browser` now caps
+> every download at 640x360 — see the SABR note at the top.
 
 Finished models are skipped, unfinished ones are picked up where they stopped.
 Re-issue the identical line after a crash, a closed laptop or a Ctrl-C. Once
@@ -139,13 +226,12 @@ exits — which is when you want the second command.
 
 ```bash
 python model_frames.py fetch --families f7_fixed_wing_vtol --top-up 2 \
-  --cookies-from-browser chrome \
   --sleep-requests 2 --sleep-interval 8 --delay 5
 ```
 
 `--top-up N` revisits **every** model in the family, ignoring `.done`, and adds
-N new videos per search term. Videos already on disk are still skipped, so it
-only ever downloads material you do not have:
+N new videos per search term. Videos already in the registry are still skipped,
+so it only ever downloads material you do not have:
 
 ```
 [1/22] f7_fixed_wing_vtol / WingtraOne Gen II
@@ -165,12 +251,18 @@ prints only `already have ... skipping` lines has been exhausted at the current
 Do **not** use `--no-resume` for this. It ignores the per-video check as well
 and re-downloads everything you already have.
 
-### Resume works at two levels
+### Resume works at three levels
 
-- **per model** — `.done` in the model dir; a finished model is skipped entirely.
-- **per video** — before downloading, `fetch` checks whether frames for that
-  YouTube id are already on disk and skips it if so. So a run interrupted
-  halfway through a model does not re-download the videos it already framed.
+- **per video** — `video_registry.json` records every id ever processed, and the
+  check is category-blind, so a clip already taken under one aircraft is never
+  taken again under another. This replaced an on-disk scan, which forgot
+  everything as soon as triage deleted the frames: it had lost 939 of the 1,366
+  collected videos.
+- **per sweep** — `--sweep NAME` records each finished model in the registry, so
+  an interrupted pass over a category continues at the model it stopped at.
+  Survives the model folder being deleted.
+- **per model** — `.done` in the model dir. The oldest of the three, and the
+  weakest: it disappears with the folder.
 
 Frame names are deterministic (`<model>_t<term>_<videoid>_<n>.jpg`), so
 re-running a model **overwrites its own frames rather than duplicating them**.
@@ -396,16 +488,25 @@ The model splits the **columns**. Your eye decides the **rows**.
 - **Folder 3 (0.25–0.50) is a hunt for missed drones, NOT a negative harvest.** See the
   confidence rule below. Worth doing yourself rather than delegating.
 
-### The confidence rule
+### The confidence rule — WITHDRAWN, judge by the scene
 
-Keep a false positive as a negative **only if both** hold:
+An earlier version of this file said to harvest negatives only at 0.50 and
+above, and treated band 3 as a missed-drone hunt with nothing else kept. **That
+rule is withdrawn.** It threw away exactly the frames the live cameras fail on.
 
-1. it fires at or above **0.50** — at or above **any** threshold we might run at
-2. the scene is something a **mast-mounted PTZ could really frame**
+Keep a frame as a negative when the scene is one our dome could really
+frame — aircraft, birds, open sky, treelines, rooftops, masts, power lines,
+open ground — **from any band, at any confidence**. Aircraft and birds are the
+two we are shortest of and the two the live cameras get wrong most.
 
-Band 3 is 0.25–0.50, so it fails test 1 by definition. One question per band-3 frame:
+The score is this gate's opinion; the scene is what the model learns from. A
+negative is kept with no box, Marked Null, so nothing teaches "suppress at
+0.25" — the whole image simply becomes background, and a bird over open sky is
+the same lesson whether it scored 0.90 or 0.26.
 
-> Is there actually a drone in it? **No → delete. Yes → keep as a positive.**
+Still deleted at any confidence, because the dome never frames them: flight
+display overlays, channel logos, desks and workbenches, cutting mats, goggles,
+studio and living-room scenes, faces, keyboards, UI buttons, product shots.
 
 Training on 0.25-level false positives teaches the model to suppress at the bottom of its
 confidence range — exactly where faint distant drones live. v16 gained **+12.6 points at

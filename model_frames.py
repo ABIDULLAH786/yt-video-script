@@ -334,7 +334,15 @@ def cmd_fetch(args):
     print(f"  registry: {registry.data['counts'].get('processed', 0):,} videos "
           f"across {registry.data['counts'].get('categories', 0)} categories"
           + (f"  (+{adopted:,} adopted from disk)" if adopted else ""))
-    print(f"  on disk : {len(video_index):,} videos\n", flush=True)
+    print(f"  on disk : {len(video_index):,} videos", flush=True)
+    if args.sweep:
+        if args.restart_sweep:
+            n = registry.clear_sweep(args.sweep)
+            print(f"  sweep '{args.sweep}': cleared {n} model(s), starting over")
+        done_m, done_v = registry.sweep_progress(args.sweep)
+        print(f"  sweep '{args.sweep}': {done_m} model(s) already done, "
+              f"{done_v} video(s) taken")
+    print(flush=True)
 
     planned = [(f, m) for f in fams for m in models[f]]
     if args.max_per_family:
@@ -384,6 +392,15 @@ def cmd_fetch(args):
             continue
         mdir = _model_dir(out, fam, model, args.variant)
         marker = mdir / ".done"
+        # A named sweep is the durable resume: it lives in the registry, so it
+        # survives the model folder being deleted once its frames move into the
+        # filtered set — which is exactly when a .done marker disappears.
+        if args.sweep and registry.sweep_done(args.sweep, f"{fam}{args.variant}",
+                                              slug(model)) and not args.no_resume:
+            skipped += 1
+            print(f"[{idx}/{len(planned)}] {fam}/{model} — done in sweep "
+                  f"'{args.sweep}', skipping")
+            continue
         if marker.exists() and not args.no_resume and not args.top_up \
                 and not args.max_per_family:
             skipped += 1
@@ -405,8 +422,11 @@ def cmd_fetch(args):
                 manifest = {}
 
         any_candidates = False
+        model_new = 0
         for ti, term in enumerate(search_terms(model)):
             if args.max_per_family and fam_new.get(fam, 0) >= args.max_per_family:
+                break
+            if args.max_per_model and model_new >= args.max_per_model:
                 break
             vdir = workdir / fam / slug(model) / f"t{ti}"
             vdir.mkdir(parents=True, exist_ok=True)
@@ -601,7 +621,12 @@ def cmd_fetch(args):
                                 frames=n_frames, title=title,
                                 duration_s=dur, term=ti)
                 got_new += 1
+                model_new += 1
                 fam_new[fam] = fam_new.get(fam, 0) + 1
+                if args.max_per_model and model_new >= args.max_per_model:
+                    print(f"        -> {slug(model)} has its {args.max_per_model}, "
+                          f"moving to the next model", flush=True)
+                    break
                 if args.max_per_family and fam_new[fam] >= args.max_per_family:
                     print(f"    -> {fam} budget reached "
                           f"({args.max_per_family} new video(s))", flush=True)
@@ -628,6 +653,9 @@ def cmd_fetch(args):
         # it was marked complete and silently skipped the top-up it was re-run
         # for. A model whose every search returned nothing has not been
         # collected, whatever is already on disk.
+        if args.sweep and any_candidates:
+            registry.mark_sweep(args.sweep, f"{fam}{args.variant}",
+                                slug(model), model_new)
         if total_frames > 0 and any_candidates:
             marker.touch()
             done_n += 1
@@ -1015,6 +1043,26 @@ def main():
                    help="the global video record. Every id in it is skipped, "
                         "whichever category asks for it, and every new video is "
                         "written to it as soon as its frames are cut.")
+    f.add_argument("--sweep", default="", metavar="NAME",
+                   help="name this pass over the models. Every model finished "
+                        "is recorded in the registry under that name and "
+                        "skipped if the run is repeated, so an interrupted "
+                        "sweep continues where it stopped instead of starting "
+                        "at the first model again. Recorded in the registry, "
+                        "not in the model folder, so it survives that folder "
+                        "being deleted. Use --restart-sweep to start over.")
+    f.add_argument("--restart-sweep", action="store_true",
+                   help="forget a sweep's progress and begin again from the "
+                        "first model. Collected videos stay in the registry, "
+                        "so nothing is re-downloaded.")
+    f.add_argument("--max-per-model", type=int, default=0, metavar="N",
+                   help="stop a MODEL once N new videos have been downloaded "
+                        "for it, then move to the next model. Pair with "
+                        "--max-per-family to spread a small budget across "
+                        "aircraft: --max-per-family 6 --max-per-model 1 gives "
+                        "6 videos from 6 different models, where "
+                        "--max-per-family 6 alone takes all 6 from the first "
+                        "model that has them.")
     f.add_argument("--max-per-family", type=int, default=0, metavar="N",
                    help="stop a category once N NEW videos have been "
                         "downloaded for it. A per-category budget, which "

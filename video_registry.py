@@ -133,6 +133,7 @@ class Registry:
         # that is meant to persist it, because the id is still in the file the
         # merge reads back.
         self._removed: set[str] = set()
+        self._cleared_sweeps: set[str] = set()
 
     # ------------------------------------------------------------ disk
     def _read(self) -> dict:
@@ -164,6 +165,13 @@ class Registry:
                 continue
             merged[vid] = entry
         self.data["videos"] = merged
+        sweeps = on_disk.get("sweeps", {})
+        for name, models in self.data.get("sweeps", {}).items():
+            sweeps.setdefault(name, {}).update(models)
+        for name in list(sweeps):
+            if name not in self.data.get("sweeps", {}) and name in self._cleared_sweeps:
+                sweeps.pop(name, None)
+        self.data["sweeps"] = sweeps
         self.data["version"] = VERSION
         self.data["updated_utc"] = now_utc()
         self.data["categories"] = self._derive_categories()
@@ -297,6 +305,34 @@ class Registry:
         if self.autosave:
             self.save()
         return entry
+
+    # ------------------------------------------------------- sweeps
+    # A sweep is one pass over a category's models — "one new video for every
+    # aircraft in f1", say. It is recorded HERE rather than as a .done file in
+    # the model folder, because those folders are deleted once their frames
+    # move into the filtered set, taking the resume state with them. The
+    # registry outlives them.
+    def sweep_done(self, sweep: str, fam: str, model_slug: str) -> bool:
+        return f"{fam}/{model_slug}" in self.data.get("sweeps", {}).get(sweep, {})
+
+    def mark_sweep(self, sweep: str, fam: str, model_slug: str,
+                   videos: int = 0) -> None:
+        s = self.data.setdefault("sweeps", {}).setdefault(sweep, {})
+        s[f"{fam}/{model_slug}"] = {"videos": videos, "utc": now_utc()}
+        if self.autosave:
+            self.save()
+
+    def sweep_progress(self, sweep: str) -> tuple[int, int]:
+        """(models done, videos taken) for a sweep."""
+        s = self.data.get("sweeps", {}).get(sweep, {})
+        return len(s), sum(int(v.get("videos") or 0) for v in s.values())
+
+    def clear_sweep(self, sweep: str) -> int:
+        n = len(self.data.get("sweeps", {}).pop(sweep, {}))
+        self._cleared_sweeps.add(sweep)
+        if n and self.autosave:
+            self.save()
+        return n
 
     def remove(self, vid: str) -> bool:
         gone = self.data["videos"].pop(vid, None) is not None
