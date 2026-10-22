@@ -61,9 +61,20 @@ A sweep is one pass over a category's models. Each finished model is recorded
 those folders are deleted once their frames move into the filtered set — which
 is exactly when a `.done` marker would disappear.
 
+Continue an interrupted sweep — the identical line, nothing added:
+
 ```bash
---sweep oct-round1     # record progress under this name, skip what is done
---restart-sweep        # forget the progress, begin at the first model again
+./model_frames.py fetch --families 1 --sweep oct-round1 \
+    --max-per-family 30 --max-per-model 1 \
+    --min-duration 180 --sleep-requests 2 --sleep-interval 5
+```
+
+Start the sweep again from the first model:
+
+```bash
+./model_frames.py fetch --families 1 --sweep oct-round1 --restart-sweep \
+    --max-per-family 30 --max-per-model 1 \
+    --min-duration 180 --sleep-requests 2 --sleep-interval 5
 ```
 
 `--restart-sweep` re-downloads nothing: it only forgets which *models* were
