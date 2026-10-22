@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "updated_utc": "2026-10-22T08:38:51Z",
+  "updated_utc": "2026-10-22T09:06:39Z",
   "counts": {
-    "videos": 1366,
-    "processed": 1366,
-    "failed": 0,
-    "frames": 403703,
+    "videos": 1386,
+    "processed": 1368,
+    "failed": 18,
+    "frames": 404086,
     "categories": 8
   },
   "categories": {
     "f1_folding_quad": {
-      "videos": 177,
-      "frames": 82338,
+      "videos": 179,
+      "frames": 82721,
       "urls": [
         "https://www.youtube.com/watch?v=-V3I88mS5IU",
         "https://www.youtube.com/watch?v=-biRVOLXV5U",
@@ -42,6 +42,7 @@
         "https://www.youtube.com/watch?v=B_xOgjoCKZM",
         "https://www.youtube.com/watch?v=Bk_8T0X04Hc",
         "https://www.youtube.com/watch?v=BmgCKSABOkQ",
+        "https://www.youtube.com/watch?v=BuDgHanl2oc",
         "https://www.youtube.com/watch?v=CLD26cMmFbA",
         "https://www.youtube.com/watch?v=CobkTlsW1-0",
         "https://www.youtube.com/watch?v=D0r2gLLf53A",
@@ -144,6 +145,7 @@
         "https://www.youtube.com/watch?v=jug3T000JdE",
         "https://www.youtube.com/watch?v=k0EO2bF1zHc",
         "https://www.youtube.com/watch?v=kNMxvAwosVw",
+        "https://www.youtube.com/watch?v=kfvbyS67Ev0",
         "https://www.youtube.com/watch?v=l9YfNDt4Mdo",
         "https://www.youtube.com/watch?v=l9uaSqj1eZ0",
         "https://www.youtube.com/watch?v=lw7nnGq5ZKY",
@@ -19182,6 +19184,212 @@
       "attempts": 1,
       "source": "seed:videos.json",
       "processed_utc": "2026-10-21T06:47:51Z"
+    },
+    "BuDgHanl2oc": {
+      "url": "https://www.youtube.com/watch?v=BuDgHanl2oc",
+      "category": "f1_folding_quad",
+      "model": "dji_phantom_4_pro_v2_rtk",
+      "term": 0,
+      "title": "DJI Phantom 4 Pro Payload Release System (Lift and Drop Test)",
+      "duration_s": 575,
+      "frames": 287,
+      "status": "processed",
+      "attempts": 1,
+      "source": "youtube",
+      "processed_utc": "2026-10-22T09:03:00Z"
+    },
+    "IY4hR5Icpz8": {
+      "url": "https://www.youtube.com/watch?v=IY4hR5Icpz8",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] IY4hR5Icpz8: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 2,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:46:57Z"
+    },
+    "PX9p7VES3bk": {
+      "url": "https://www.youtube.com/watch?v=PX9p7VES3bk",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] PX9p7VES3bk: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:44:57Z"
+    },
+    "izXXBqqAZcI": {
+      "url": "https://www.youtube.com/watch?v=izXXBqqAZcI",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] izXXBqqAZcI: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:46:38Z"
+    },
+    "1Q-cue8UcpM": {
+      "url": "https://www.youtube.com/watch?v=1Q-cue8UcpM",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] 1Q-cue8UcpM: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:49:25Z"
+    },
+    "-_FU89q09Bs": {
+      "url": "https://www.youtube.com/watch?v=-_FU89q09Bs",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] -_FU89q09Bs: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:49:54Z"
+    },
+    "_4CkehlbBiI": {
+      "url": "https://www.youtube.com/watch?v=_4CkehlbBiI",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] _4CkehlbBiI: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:50:16Z"
+    },
+    "-Crjhc_L600": {
+      "url": "https://www.youtube.com/watch?v=-Crjhc_L600",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] -Crjhc_L600: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:50:34Z"
+    },
+    "wl7N5gUNsL4": {
+      "url": "https://www.youtube.com/watch?v=wl7N5gUNsL4",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] wl7N5gUNsL4: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:53:44Z"
+    },
+    "O9wPb52sUyY": {
+      "url": "https://www.youtube.com/watch?v=O9wPb52sUyY",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] O9wPb52sUyY: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:54:07Z"
+    },
+    "GAMubfJ58nw": {
+      "url": "https://www.youtube.com/watch?v=GAMubfJ58nw",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] GAMubfJ58nw: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:54:39Z"
+    },
+    "oqNdcpOTHRQ": {
+      "url": "https://www.youtube.com/watch?v=oqNdcpOTHRQ",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] oqNdcpOTHRQ: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:54:58Z"
+    },
+    "uRKPZqEMFOY": {
+      "url": "https://www.youtube.com/watch?v=uRKPZqEMFOY",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] uRKPZqEMFOY: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:55:18Z"
+    },
+    "1L5L0HJ753M": {
+      "url": "https://www.youtube.com/watch?v=1L5L0HJ753M",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] 1L5L0HJ753M: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:55:37Z"
+    },
+    "e-ItnS4IeUI": {
+      "url": "https://www.youtube.com/watch?v=e-ItnS4IeUI",
+      "category": "f1_folding_quad",
+      "model": "dji_air_3s",
+      "status": "failed",
+      "error": "ERROR: [youtube] e-ItnS4IeUI: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:55:56Z"
+    },
+    "OvXog3YONw0": {
+      "url": "https://www.youtube.com/watch?v=OvXog3YONw0",
+      "category": "f1_folding_quad",
+      "model": "dji_phantom_4_pro_v2_rtk",
+      "status": "failed",
+      "error": "ERROR: [youtube] OvXog3YONw0: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:58:34Z"
+    },
+    "AMTO_4r_o_s": {
+      "url": "https://www.youtube.com/watch?v=AMTO_4r_o_s",
+      "category": "f1_folding_quad",
+      "model": "dji_phantom_4_pro_v2_rtk",
+      "status": "failed",
+      "error": "ERROR: [youtube] AMTO_4r_o_s: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:58:59Z"
+    },
+    "9HelK5EcwBA": {
+      "url": "https://www.youtube.com/watch?v=9HelK5EcwBA",
+      "category": "f1_folding_quad",
+      "model": "dji_phantom_4_pro_v2_rtk",
+      "status": "failed",
+      "error": "ERROR: [youtube] 9HelK5EcwBA: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:59:18Z"
+    },
+    "GedfXR6z23c": {
+      "url": "https://www.youtube.com/watch?v=GedfXR6z23c",
+      "category": "f1_folding_quad",
+      "model": "dji_phantom_4_pro_v2_rtk",
+      "status": "failed",
+      "error": "ERROR: [youtube] GedfXR6z23c: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T08:59:54Z"
+    },
+    "kfvbyS67Ev0": {
+      "url": "https://www.youtube.com/watch?v=kfvbyS67Ev0",
+      "category": "f1_folding_quad",
+      "model": "dji_phantom_4_pro_v2_rtk",
+      "term": 1,
+      "title": "Testing Precision Landing with DJI Phantom 4 Pro",
+      "duration_s": 192,
+      "frames": 96,
+      "status": "processed",
+      "attempts": 1,
+      "source": "youtube",
+      "processed_utc": "2026-10-22T09:06:39Z"
     }
   }
 }

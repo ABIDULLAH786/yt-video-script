@@ -377,6 +377,7 @@ def cmd_fetch(args):
           f"({len(planned) * len(MODEL_TEMPLATES)} searches) — {mode}\n")
 
     done_n = skipped = 0
+    sabr_warned = False
     fam_new: dict[str, int] = {}
     for idx, (fam, model) in enumerate(planned, 1):
         if args.max_per_family and fam_new.get(fam, 0) >= args.max_per_family:
@@ -516,6 +517,28 @@ def cmd_fetch(args):
                               f"   Models already collected are marked done and "
                               f"will be skipped.\n", file=sys.stderr)
                         raise SystemExit(2)
+                    # The one failure that is never about this video. YouTube
+                    # runs a SABR-only streaming experiment on some signed-in
+                    # accounts: with cookies attached, the adaptive formats
+                    # arrive with no URL and are dropped, leaving format 18
+                    # (640x360 muxed) as the only thing on offer. Measured
+                    # 2026-10-22 — the same videos give 1080p and 4K with no
+                    # cookies and 360p with them. Before the minimum-resolution
+                    # check existed this was invisible: the run just quietly
+                    # collected 360p frames.
+                    if "Requested format is not available" in err_txt \
+                            and args.cookies_from_browser and not sabr_warned:
+                        sabr_warned = True
+                        print(f"\n!! No format at or above "
+                              f"{args.min_width}x{args.min_height} is being offered, "
+                              f"and --cookies-from-browser is in use.\n"
+                              f"   YouTube's SABR-only experiment is active on that "
+                              f"account: signed in, it offers\n"
+                              f"   640x360 and nothing else. Drop "
+                              f"--cookies-from-browser and the same videos come\n"
+                              f"   down at 1080p. Use --sleep-requests 2 "
+                              f"--sleep-interval 5 against rate-limiting instead.\n",
+                              file=sys.stderr)
                     print(f"        [{vid}] DOWNLOAD FAILED: "
                           f"{err_txt[:120]}", file=sys.stderr)
                     # Recorded, not silently dropped. A video that is private,
