@@ -104,6 +104,8 @@ def main():
                          "last, and the running median drifts up with them until the "
                          "oversize guard stops firing. Measured on files 416-425: boxes ran "
                          "40,43,48,48,61 px while the drone is 26-30 px either side.")
+    ap.add_argument("--recover-scale", type=float, default=3.0,
+                    help="how much to widen the search when the trace stalls")
     ap.add_argument("--thresh", type=float, default=2.8,
                     help="difference threshold in standard deviations. Lower it for a faint "
                          "target: at 110 m the drone is a 10 px smudge and the default 2.8 "
@@ -231,11 +233,63 @@ def main():
             if best is None or d < best[0]:
                 best = (d, x0 + x, y0 + y, w, h)
         if best is None:
-            print(f"{n:>6}  -- not found --")
             miss += 1
-            if miss > args.max_miss:
-                print(f"\nstopped: {args.max_miss} consecutive misses")
+            # RECOVERY. A run of misses usually means the trace drifted, not that the drone
+            # left: the prediction is now pointing somewhere it never went, so the window
+            # looks at empty sky. Before giving up, search a much wider window at a lower
+            # threshold and take the candidate that best continues the last good heading.
+            if miss >= args.max_miss:
+                RR = int(args.radius * args.recover_scale)
+                rx0, ry0 = int(max(0, lx - RR)), int(max(0, ly - RR))
+                rx1, ry1 = int(min(W, lx + RR)), int(min(H, ly + RR))
+                cand = None
+                if rx1 - rx0 > 40 and ry1 - ry0 > 40:
+                    c2 = cv2.cvtColor(cv2.imread(str(by_num[n]))[ry0:ry1, rx0:rx1],
+                                      cv2.COLOR_BGR2GRAY).astype(np.float32)
+                    nb2 = [cv2.cvtColor(cv2.imread(str(by_num[n + k]))[ry0:ry1, rx0:rx1],
+                                        cv2.COLOR_BGR2GRAY).astype(np.float32)
+                           for k in NB_OFFSETS if n + k in by_num]
+                    if len(nb2) >= 2:
+                        d2 = np.abs(np.median(np.stack(nb2), 0) - c2)
+                        m2 = (d2 > max(args.floor * 0.7, d2.std() * (args.thresh - 0.3))
+                              ).astype(np.uint8)
+                        m2 = cv2.morphologyEx(m2, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
+                        nl2, _, st2, _ = cv2.connectedComponentsWithStats(m2, 8)
+                        for i in range(1, nl2):
+                            x, y, w, h, a = st2[i]
+                            if a < 4 or w < ref * 0.35 or w > ref * 2.4 or h > 20:
+                                continue
+                            bx2, by2 = rx0 + x + w / 2, ry0 + y + h / 2
+                            # prefer the one lying along the heading it was last travelling
+                            dv = float(np.hypot(bx2 - (lx + vx * gap), by2 - (ly + vy * gap)))
+                            if cand is None or dv < cand[0]:
+                                cand = (dv, rx0 + x, ry0 + y, w, h)
+                if cand is not None:
+                    _, bx, by, bw, bh = cand
+                    print(f"{n:>6}  RECOVERED at x{bx+bw//2} y{by+bh//2} {bw}x{bh}"
+                          f"  (widened to {RR}px)")
+                    miss = 0
+                    box = (float(bx), float(by), float(bx + bw), float(by + bh))
+                    hist.append((n, ((box[0]+box[2])/2, (box[1]+box[3])/2, bw, bh)))
+                    hist = hist[-2:]
+                    widths.append(float(bw)); widths = widths[-6:]
+                    heights.append(float(bh)); heights = heights[-6:]
+                    if not args.dry_run:
+                        im = cv2.imread(str(by_num[n])); stem = by_num[n].stem
+                        (out / "labels" / f"{stem}.txt").write_text(
+                            f"{CLASS_ID} {(box[0]+box[2])/2/W:.6f} {(box[1]+box[3])/2/H:.6f} "
+                            f"{(box[2]-box[0])/W:.6f} {(box[3]-box[1])/H:.6f}\n")
+                        ann = im.copy(); sm = STANDOFF
+                        cv2.rectangle(ann, (int(box[0])-sm, int(box[1])-sm),
+                                           (int(box[2])+sm, int(box[3])+sm), (0, 0, 255), 1)
+                        cv2.imwrite(str(out / "annotated" / f"{stem}.jpg"), ann,
+                                    [cv2.IMWRITE_JPEG_QUALITY, 88])
+                        cv2.imwrite(str(out / "crops" / f"{stem}.jpg"), crop_tile(im, box))
+                        written += 1
+                    continue
+                print(f"\nstopped: {args.max_miss} consecutive misses and recovery found nothing")
                 break
+            print(f"{n:>6}  -- not found --")
             continue
         miss = 0
         d, bx, by, bw, bh = best

@@ -35,3 +35,4 @@ venv/
 .DS_Store
 *.egg-info/
 roboflow_uploaded.json
+label_review/
