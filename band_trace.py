@@ -245,7 +245,7 @@ def cmd_fill(args):
         best = None
         for i in range(1, nl):
             bx, by, bw, bh, a = (int(v) for v in st[i])
-            if a < 3 or bw < 2 or bw > max(14.0, ew * 2.2) or bh > 14 or bw < bh:
+            if a < 3 or bw < 2 or bw > max(args.max_w, ew * 2.6) or bh > 16 or bw < bh:
                 continue
             patch = cur[by:by + bh, bx:bx + bw]
             ring = bg[by:by + bh, bx:bx + bw]
@@ -448,6 +448,8 @@ def main():
     ap.add_argument("--fill-thresh", type=float, default=1.9)
     ap.add_argument("--fill-noise", type=float, default=0.85)
     ap.add_argument("--floor", type=float, default=2.2)
+    ap.add_argument("--max-w", type=float, default=22.0,
+                    help="widest blob the fill will accept")
     ap.add_argument("--min-contrast", type=float, default=2.0,
                     help="grey levels the blob must stand out from its surroundings")
     ap.add_argument("--interpolate", action="store_true",

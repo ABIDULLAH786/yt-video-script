@@ -43,7 +43,7 @@ FILTERED = HERE / "filtered" / "AI Filtered"
 LOG = HERE / "roboflow_uploaded.json"
 
 WORKSPACE = "abid-ullah"
-PROJECT = "drone-families-youtube"
+PROJECT = "drone-families-dataset-from-yt"
 BANDS = ["1_fires_high_conf70plus", "2_fires_mid_conf50to70",
          "3_fires_low_conf25to50", "4_silent_no_detection"]
 # Short tag per band, so the UI filter reads cleanly.
