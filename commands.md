@@ -554,3 +554,9 @@ Edit `SRC` at the top of `run_ai_triage.sh`, or call the script directly:
     --out "filtered/AI Filtered v2 f6" \
     --model ../model-testing/models/v16-best.pt
 ```
+
+
+## If you ever need the old names back:
+```bash
+./rename_frames.py --undo --apply
+```

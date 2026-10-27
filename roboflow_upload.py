@@ -36,6 +36,8 @@ import sys
 import time
 from pathlib import Path
 
+from frame_meta import video_id
+
 HERE = Path(__file__).resolve().parent
 FILTERED = HERE / "filtered" / "AI Filtered"
 LOG = HERE / "roboflow_uploaded.json"
@@ -71,21 +73,69 @@ def collect(families: list[str] | None):
     return out
 
 
-def split_for(name: str, valid_pct: float, test_pct: float) -> str:
+def split_for(name: str, valid_pct: float, test_pct: float,
+              key: str | None = None) -> str:
     """Which split this frame belongs to.
 
-    Decided from a hash of the FILENAME, not from a shuffle or a counter, so
-    the answer is the same on every run. A 30,000-image upload is interrupted
-    and resumed several times, and a random split would put the same frame in
-    train on one run and valid on the next — or, worse, reshuffle the held-out
-    set halfway through and leak training images into it.
+    Keyed on the VIDEO, not the frame. Frames are cut at 0.5 fps, so
+    consecutive ones are two seconds apart and all but identical; splitting
+    per frame puts near-twins on both sides and the validation score measures
+    memorisation rather than generalisation. Measured on this set: a per-frame
+    hash put 514 of 974 videos — 53 percent — into both train and valid.
+
+    Hashed rather than shuffled so the answer is the same on every run. A
+    30,000-image upload is interrupted and resumed several times, and a random
+    split would reshuffle the held-out set halfway through.
     """
-    h = int(hashlib.md5(name.encode()).hexdigest()[:8], 16) % 10000
+    h = int(hashlib.md5((key or name).encode()).hexdigest()[:8], 16) % 10000
     if h < valid_pct * 100:
         return "valid"
     if h < (valid_pct + test_pct) * 100:
         return "test"
     return "train"
+
+
+def build_split_map(items, valid_pct: float, test_pct: float) -> dict:
+    """{filename: split}, allocated per family and never splitting a video.
+
+    Whole videos go to one side, because frames cut at 0.5 fps are two seconds
+    apart and all but identical — a per-frame split put 514 of 974 videos on
+    both sides and would have measured memorisation. But videos differ hugely
+    in length, so simply hashing the video id overshot badly: f6 landed at
+    10.6 percent valid and f4 at 1.7. Allocating whole videos until the
+    family's frame target is met keeps both properties at once.
+
+    Videos are ordered by a hash of their id, so the choice is arbitrary but
+    identical on every run — a resumed upload must not reshuffle the split.
+    """
+    import collections
+    byfam = collections.defaultdict(lambda: collections.defaultdict(list))
+    for fam, _band, p in items:
+        byfam[fam][video_id(p) or f"__{p.name}"].append(p.name)
+
+    out = {}
+    for fam, vids in byfam.items():
+        total = sum(len(v) for v in vids.values())
+        order = sorted(vids, key=lambda v: hashlib.md5(v.encode()).hexdigest())
+        targets = [("valid", total * valid_pct / 100.0),
+                   ("test", total * test_pct / 100.0)]
+        i = 0
+        for name, target in targets:
+            got = 0
+            while got < target and i < len(order):
+                # Stop before a video that would overshoot the target by more
+                # than it would undershoot by skipping it.
+                n = len(vids[order[i]])
+                if got and abs(got + n - target) > abs(got - target):
+                    break
+                for f in vids[order[i]]:
+                    out[f] = name
+                got += n
+                i += 1
+        for v in order[i:]:
+            for f in vids[v]:
+                out[f] = "train"
+    return out
 
 
 def load_log() -> set:
@@ -103,7 +153,7 @@ def save_log(done: set) -> None:
     tmp.replace(LOG)
 
 
-def cmd_plan(items, done, valid_pct, test_pct, forced):
+def cmd_plan(items, done, valid_pct, test_pct, forced, smap):
     import collections
     per, size = collections.Counter(), collections.Counter()
     sp = collections.defaultdict(collections.Counter)
@@ -112,7 +162,7 @@ def cmd_plan(items, done, valid_pct, test_pct, forced):
             continue
         per[fam] += 1
         size[fam] += p.stat().st_size
-        sp[fam][forced or split_for(p.name, valid_pct, test_pct)] += 1
+        sp[fam][forced or smap.get(p.name, 'train')] += 1
     print(f"{'family':<30}{'images':>9}{'size':>9}{'train':>8}{'valid':>7}{'test':>7}")
     print("-" * 70)
     tot = collections.Counter()
@@ -164,9 +214,12 @@ def main():
     if not items:
         sys.exit("no images found — check --families against the folder names")
     done = load_log()
+    # Computed from EVERY frame of the chosen families, not just the ones left
+    # to send, so a resumed run assigns the same splits as the first one.
+    smap = build_split_map(items, args.valid_pct, args.test_pct)
 
     if args.plan:
-        cmd_plan(items, done, args.valid_pct, args.test_pct, args.split)
+        cmd_plan(items, done, args.valid_pct, args.test_pct, args.split, smap)
         return
 
     if not args.api_key:
@@ -202,8 +255,7 @@ def main():
             if args.limit and ok >= args.limit:
                 break
             try:
-                split = args.split or split_for(path.name, args.valid_pct,
-                                                 args.test_pct)
+                split = args.split or smap.get(path.name, "train")
                 # Send the label alongside when export_labels.py made one.
                 # A frame with no file is uploaded bare on purpose: it goes
                 # into Roboflow's annotation queue, where an empty label
