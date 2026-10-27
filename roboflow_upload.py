@@ -29,6 +29,7 @@ Get the key from Roboflow: Settings -> API Keys -> Private API Key.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -65,6 +66,23 @@ def collect(families: list[str] | None):
     return out
 
 
+def split_for(name: str, valid_pct: float, test_pct: float) -> str:
+    """Which split this frame belongs to.
+
+    Decided from a hash of the FILENAME, not from a shuffle or a counter, so
+    the answer is the same on every run. A 30,000-image upload is interrupted
+    and resumed several times, and a random split would put the same frame in
+    train on one run and valid on the next — or, worse, reshuffle the held-out
+    set halfway through and leak training images into it.
+    """
+    h = int(hashlib.md5(name.encode()).hexdigest()[:8], 16) % 10000
+    if h < valid_pct * 100:
+        return "valid"
+    if h < (valid_pct + test_pct) * 100:
+        return "test"
+    return "train"
+
+
 def load_log() -> set:
     if not LOG.exists():
         return set()
@@ -80,21 +98,26 @@ def save_log(done: set) -> None:
     tmp.replace(LOG)
 
 
-def cmd_plan(items, done):
+def cmd_plan(items, done, valid_pct, test_pct, forced):
     import collections
-    per = collections.Counter()
-    size = collections.Counter()
+    per, size = collections.Counter(), collections.Counter()
+    sp = collections.defaultdict(collections.Counter)
     for fam, band, p in items:
         if p.name in done:
             continue
         per[fam] += 1
         size[fam] += p.stat().st_size
-    print(f"{'family':<30}{'images':>9}{'size':>9}")
-    print("-" * 48)
+        sp[fam][forced or split_for(p.name, valid_pct, test_pct)] += 1
+    print(f"{'family':<30}{'images':>9}{'size':>9}{'train':>8}{'valid':>7}{'test':>7}")
+    print("-" * 70)
+    tot = collections.Counter()
     for f in sorted(per):
-        print(f"{f:<30}{per[f]:>9,}{size[f]/1e9:>8.2f}G")
-    print("-" * 48)
-    print(f"{'TO UPLOAD':<30}{sum(per.values()):>9,}{sum(size.values())/1e9:>8.2f}G")
+        tot.update(sp[f])
+        print(f"{f:<30}{per[f]:>9,}{size[f]/1e9:>8.2f}G"
+              f"{sp[f]['train']:>8,}{sp[f]['valid']:>7,}{sp[f]['test']:>7,}")
+    print("-" * 70)
+    print(f"{'TO UPLOAD':<30}{sum(per.values()):>9,}{sum(size.values())/1e9:>8.2f}G"
+          f"{tot['train']:>8,}{tot['valid']:>7,}{tot['test']:>7,}")
     if done:
         print(f"\nalready uploaded, will be skipped: {len(done):,}")
     n = sum(per.values())
@@ -115,7 +138,12 @@ def main():
                     help="counts and size only, no network")
     ap.add_argument("--create", action="store_true",
                     help="create the project, then exit")
-    ap.add_argument("--split", default="train", choices=["train", "valid", "test"])
+    ap.add_argument("--split", default="", choices=["", "train", "valid", "test"],
+                    help="force every image into one split; default is to "
+                         "divide each family by --valid-pct / --test-pct")
+    ap.add_argument("--valid-pct", type=float, default=4.0)
+    ap.add_argument("--test-pct", type=float, default=0.0,
+                    help="held out per family, in percent")
     ap.add_argument("--limit", type=int, default=0,
                     help="stop after N uploads, for a trial run")
     ap.add_argument("--api-key", default=os.environ.get("ROBOFLOW_API_KEY", ""))
@@ -128,7 +156,7 @@ def main():
     done = load_log()
 
     if args.plan:
-        cmd_plan(items, done)
+        cmd_plan(items, done, args.valid_pct, args.test_pct, args.split)
         return
 
     if not args.api_key:
@@ -164,7 +192,9 @@ def main():
             if args.limit and ok >= args.limit:
                 break
             try:
-                project.upload(str(path), split=args.split, batch_name=fam,
+                split = args.split or split_for(path.name, args.valid_pct,
+                                                 args.test_pct)
+                project.upload(str(path), split=split, batch_name=fam,
                                tag_names=[fam, BAND_TAG.get(band, band)],
                                num_retry_uploads=3)
                 done.add(path.name)
