@@ -42,6 +42,8 @@ import re
 import sys
 from pathlib import Path
 
+from frame_meta import video_id as _vid_of
+
 try:
     import imagehash
     from PIL import Image
@@ -74,7 +76,18 @@ def plan(folder: Path, threshold: int, progress=True):
     meta, skipped = {}, []
     for p in files:
         m = NAME_RE.match(p.name)
-        (meta.__setitem__(p.name, m.groupdict()) if m else skipped.append(p.name))
+        if m:
+            meta[p.name] = m.groupdict()
+            continue
+        # Short names (f1_b1_00001) carry no video id; frame_meta reads it
+        # back out of the category's rename_map.csv.
+        vid = _vid_of(p)
+        num = re.sub(r"\D", "", p.stem)[-5:] or "0"
+        if vid:
+            meta[p.name] = {"conf": "", "model": "", "term": "0",
+                            "vid": vid, "num": num}
+        else:
+            skipped.append(p.name)
     if skipped:
         print(f"  ! {len(skipped)} filename(s) not in the expected form, left alone",
               file=sys.stderr)
