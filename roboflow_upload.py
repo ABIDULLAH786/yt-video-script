@@ -248,8 +248,54 @@ def main():
     print(f"{len(items):,} frames found, {len(done):,} already uploaded, "
           f"{len(todo):,} to send\n")
 
+    target = min(args.limit, len(todo)) if args.limit else len(todo)
     ok = fail = 0
     t0 = time.time()
+    last_draw = 0.0
+
+    _LINE = 96
+
+    def hms(sec):
+        sec = int(max(sec, 0))
+        return f"{sec//3600:d}h{(sec%3600)//60:02d}m" if sec >= 3600 \
+            else f"{sec//60:d}m{sec%60:02d}s"
+
+    tty = sys.stdout.isatty()
+
+    def draw(force=False):
+        """One line, rewritten in place, so a long run shows it is alive.
+
+        Redirected to a file there is no cursor to rewind, so a half-second
+        redraw would write tens of thousands of lines. Off a terminal it
+        prints a plain line every 250 instead.
+        """
+        nonlocal last_draw
+        now = time.time()
+        if not tty:
+            if force or (ok and ok % 250 == 0 and now - last_draw > 1):
+                last_draw = now
+                el = now - t0
+                print(f"  {ok:,}/{target:,}  {ok/max(el,0.001):.1f}/s  "
+                      f"up {hms(el)}  {fail} failed", flush=True)
+            return
+        if not force and now - last_draw < 0.5:
+            return
+        last_draw = now
+        el = now - t0
+        rate = ok / max(el, 0.001)
+        # on ok only: a failure does not advance the goal, and counting
+        # attempts pushed the bar past 100% once retries piled up.
+        pct = min(100.0, 100 * ok / max(target, 1))
+        bar_w = 24
+        filled = int(bar_w * pct / 100)
+        bar = "#" * filled + "." * (bar_w - filled)
+        eta = (target - ok - fail) / max(rate, 0.01)
+        sys.stdout.write(
+            f"\r  [{bar}] {ok:,}/{target:,} {pct:5.1f}%  "
+            f"{rate:4.1f}/s  up {hms(el)}  eta {hms(eta)}  "
+            f"{fail} failed".ljust(_LINE)[:_LINE])
+        sys.stdout.flush()
+
     try:
         for i, (fam, band, path) in enumerate(todo, 1):
             if args.limit and ok >= args.limit:
@@ -270,19 +316,19 @@ def main():
                 ok += 1
             except Exception as e:
                 fail += 1
+                sys.stdout.write("\r" + " " * _LINE + "\r")
                 print(f"  ! {path.name}: {str(e)[:100]}", file=sys.stderr)
+            draw()
             if ok and ok % 100 == 0:
                 save_log(done)
-                rate = ok / max(time.time() - t0, 1)
-                left = (len(todo) - i) / max(rate, 0.01) / 3600
-                print(f"  {ok:,}/{len(todo):,}  {rate:.1f}/s  "
-                      f"~{left:.1f} h left  ({fail} failed)", flush=True)
     except KeyboardInterrupt:
+        draw(force=True)
         print("\ninterrupted — progress saved, re-run the same command to continue")
     finally:
         save_log(done)
 
-    print(f"\nuploaded {ok:,}, failed {fail}, logged {len(done):,} in total")
+    draw(force=True)
+    print(f"\n\nuploaded {ok:,}, failed {fail}, logged {len(done):,} in total")
     print(f"log: {LOG}")
     if fail:
         print("re-run the same command; only the failures will be retried")

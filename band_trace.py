@@ -251,9 +251,12 @@ def cmd_fill(args):
             ring = bg[by:by + bh, bx:bx + bw]
             if patch.size == 0 or abs(float(patch.mean() - ring.mean())) < args.min_contrast:
                 continue
-            d = float(np.hypot(x0 + bx + bw / 2 - ex, y0 + by + bh / 2 - ey))
+            cy_ = y0 + by + bh / 2
+            if not (args.ymin <= cy_ <= args.ymax):
+                continue
+            d = float(np.hypot(x0 + bx + bw / 2 - ex, cy_ - ey))
             if d <= args.radius and (best is None or d < best[0]):
-                best = (d, x0 + bx + bw / 2, y0 + by + bh / 2, float(bw), float(bh))
+                best = (d, x0 + bx + bw / 2, cy_, float(bw), float(bh))
         return best
 
     ns_all = sorted(idx)
@@ -448,6 +451,9 @@ def main():
     ap.add_argument("--fill-thresh", type=float, default=1.9)
     ap.add_argument("--fill-noise", type=float, default=0.85)
     ap.add_argument("--floor", type=float, default=2.2)
+    ap.add_argument("--ymin", type=float, default=0.0)
+    ap.add_argument("--ymax", type=float, default=1e9,
+                    help="keep the fill in the sky; the treeline will swallow it otherwise")
     ap.add_argument("--max-w", type=float, default=22.0,
                     help="widest blob the fill will accept")
     ap.add_argument("--min-contrast", type=float, default=2.0,
