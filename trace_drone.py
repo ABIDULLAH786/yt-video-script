@@ -104,6 +104,12 @@ def main():
                          "last, and the running median drifts up with them until the "
                          "oversize guard stops firing. Measured on files 416-425: boxes ran "
                          "40,43,48,48,61 px while the drone is 26-30 px either side.")
+    ap.add_argument("--thresh", type=float, default=2.8,
+                    help="difference threshold in standard deviations. Lower it for a faint "
+                         "target: at 110 m the drone is a 10 px smudge and the default 2.8 "
+                         "misses it, while 2.4 finds it in every frame.")
+    ap.add_argument("--floor", type=float, default=9.0,
+                    help="absolute floor on the difference, in grey levels")
     ap.add_argument("--backward", action="store_true",
                     help="walk from --to down to --from. The 2592 bands are the return leg of "
                          "one flight, so a band's LAST frames continue the NEXT band's FIRST "
@@ -196,7 +202,7 @@ def main():
         # where this tool is needed - it missed files 279-282 over the treeline until the
         # sign was dropped.
         diff = np.abs(med - cur)
-        m = (diff > max(9.0, diff.std() * 2.8)).astype(np.uint8)
+        m = (diff > max(args.floor, diff.std() * args.thresh)).astype(np.uint8)
         m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((2, 2), np.uint8))
         m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
         nl, lab, st, _ = cv2.connectedComponentsWithStats(m, 8)

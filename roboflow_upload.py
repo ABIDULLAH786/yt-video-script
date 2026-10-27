@@ -52,7 +52,12 @@ BAND_TAG = {"1_fires_high_conf70plus": "conf-high",
 
 
 def collect(families: list[str] | None):
-    """[(family, band, path)] for every clean frame to upload."""
+    """[(family, band, path)] for every CLEAN frame to upload.
+
+    images/ only. The annotated/ copies have the detector's boxes burned into
+    the pixels; uploading those teaches the model that a red rectangle is a
+    drone, which is the one mistake that would poison the whole set.
+    """
     out = []
     if not FILTERED.is_dir():
         sys.exit(f"not found: {FILTERED}")
@@ -141,6 +146,11 @@ def main():
     ap.add_argument("--split", default="", choices=["", "train", "valid", "test"],
                     help="force every image into one split; default is to "
                          "divide each family by --valid-pct / --test-pct")
+    ap.add_argument("--with-labels", action="store_true",
+                    help="attach <band>/labels/<stem>.txt where export_labels.py "
+                         "wrote one, so the frame arrives already boxed. Frames "
+                         "with no label file are uploaded bare and queued for "
+                         "annotation.")
     ap.add_argument("--valid-pct", type=float, default=4.0)
     ap.add_argument("--test-pct", type=float, default=0.0,
                     help="held out per family, in percent")
@@ -194,7 +204,14 @@ def main():
             try:
                 split = args.split or split_for(path.name, args.valid_pct,
                                                  args.test_pct)
-                project.upload(str(path), split=split, batch_name=fam,
+                # Send the label alongside when export_labels.py made one.
+                # A frame with no file is uploaded bare on purpose: it goes
+                # into Roboflow's annotation queue, where an empty label
+                # would instead mark it "no objects here" and hide it.
+                lab = path.parent.parent / "labels" / f"{path.stem}.txt"
+                ann = str(lab) if (args.with_labels and lab.exists()) else None
+                project.upload(str(path), annotation_path=ann,
+                               split=split, batch_name=fam,
                                tag_names=[fam, BAND_TAG.get(band, band)],
                                num_retry_uploads=3)
                 done.add(path.name)
