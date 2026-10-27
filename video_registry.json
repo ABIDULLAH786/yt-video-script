@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "updated_utc": "2026-10-22T10:52:01Z",
+  "updated_utc": "2026-10-22T11:16:25Z",
   "counts": {
-    "videos": 1387,
-    "processed": 1386,
-    "failed": 1,
-    "frames": 408735,
+    "videos": 1396,
+    "processed": 1394,
+    "failed": 2,
+    "frames": 411019,
     "categories": 8
   },
   "categories": {
@@ -200,8 +200,8 @@
       ]
     },
     "f2_micro_selfie": {
-      "videos": 156,
-      "frames": 53773,
+      "videos": 164,
+      "frames": 56057,
       "urls": [
         "https://www.youtube.com/watch?v=-0N7eS_XRZU",
         "https://www.youtube.com/watch?v=-5UMgG73pvg",
@@ -213,6 +213,7 @@
         "https://www.youtube.com/watch?v=2KkYFGiN2Q0",
         "https://www.youtube.com/watch?v=2Y47XWZxgaM",
         "https://www.youtube.com/watch?v=301cLDres9s",
+        "https://www.youtube.com/watch?v=3RG4Gh8dRKQ",
         "https://www.youtube.com/watch?v=4UqMPwpub4Y",
         "https://www.youtube.com/watch?v=4Zqers1Fh-8",
         "https://www.youtube.com/watch?v=4cWOOflSa9E",
@@ -239,6 +240,7 @@
         "https://www.youtube.com/watch?v=EYSjP9fdNNc",
         "https://www.youtube.com/watch?v=EzBa9dQ0r6A",
         "https://www.youtube.com/watch?v=FGz_YMidMKk",
+        "https://www.youtube.com/watch?v=G5tcz5RjD3g",
         "https://www.youtube.com/watch?v=G62FQ4roPeA",
         "https://www.youtube.com/watch?v=G7fH-ThjzCg",
         "https://www.youtube.com/watch?v=GDCjoJk1xmc",
@@ -298,6 +300,7 @@
         "https://www.youtube.com/watch?v=Zrvl_Y10qAE",
         "https://www.youtube.com/watch?v=_-_jwOTex-o",
         "https://www.youtube.com/watch?v=_PWicy-UiOg",
+        "https://www.youtube.com/watch?v=_R0L1ekDBto",
         "https://www.youtube.com/watch?v=ahmlkDEvxmQ",
         "https://www.youtube.com/watch?v=cX4-iq06OzA",
         "https://www.youtube.com/watch?v=cfAzQuTiTSc",
@@ -313,6 +316,7 @@
         "https://www.youtube.com/watch?v=e22HN9g9LuQ",
         "https://www.youtube.com/watch?v=e96aAJ0b5Q8",
         "https://www.youtube.com/watch?v=fDUCC2jtHZ8",
+        "https://www.youtube.com/watch?v=fTjif3e3fLI",
         "https://www.youtube.com/watch?v=fV6FolU_lh8",
         "https://www.youtube.com/watch?v=f_UH4tWeQZw",
         "https://www.youtube.com/watch?v=gcnUykMbI-A",
@@ -323,6 +327,7 @@
         "https://www.youtube.com/watch?v=ko7xicpJ8SA",
         "https://www.youtube.com/watch?v=kqFKARMdmpc",
         "https://www.youtube.com/watch?v=lrW8yqk6gQ4",
+        "https://www.youtube.com/watch?v=ltOEktx8eA8",
         "https://www.youtube.com/watch?v=m4EzEhrszA8",
         "https://www.youtube.com/watch?v=mxnj5nYjvVQ",
         "https://www.youtube.com/watch?v=nONbVJKHBeA",
@@ -350,7 +355,10 @@
         "https://www.youtube.com/watch?v=vSWTTvw6tGM",
         "https://www.youtube.com/watch?v=vbC2eC7PUMw",
         "https://www.youtube.com/watch?v=viTLv9tTH6U",
+        "https://www.youtube.com/watch?v=vlpwcUyNjno",
         "https://www.youtube.com/watch?v=w4Z7HB5Wsqc",
+        "https://www.youtube.com/watch?v=wfC9dSwT_Ms",
+        "https://www.youtube.com/watch?v=xaog-B9JBv0",
         "https://www.youtube.com/watch?v=xeQe-IzrbH8",
         "https://www.youtube.com/watch?v=yK3_EdMI6PI",
         "https://www.youtube.com/watch?v=yP8nB6_nqOg",
@@ -19472,6 +19480,120 @@
       "attempts": 1,
       "source": "youtube",
       "processed_utc": "2026-10-22T10:52:00Z"
+    },
+    "G5tcz5RjD3g": {
+      "url": "https://www.youtube.com/watch?v=G5tcz5RjD3g",
+      "category": "f2_micro_selfie",
+      "model": "hoverair_x1_promax",
+      "term": 0,
+      "title": "HoverAir X1 ProMax Range Test - Not what I expected!",
+      "duration_s": 352,
+      "frames": 176,
+      "status": "processed",
+      "attempts": 1,
+      "source": "youtube",
+      "processed_utc": "2026-10-22T10:54:55Z"
+    },
+    "fTjif3e3fLI": {
+      "url": "https://www.youtube.com/watch?v=fTjif3e3fLI",
+      "category": "f2_micro_selfie",
+      "model": "ryze_tello_edu",
+      "term": 0,
+      "title": "DJI Ryze Tello With DJI Technology First Flight 2023\\2024",
+      "duration_s": 528,
+      "frames": 264,
+      "status": "processed",
+      "attempts": 1,
+      "source": "youtube",
+      "processed_utc": "2026-10-22T10:58:05Z"
+    },
+    "3RG4Gh8dRKQ": {
+      "url": "https://www.youtube.com/watch?v=3RG4Gh8dRKQ",
+      "category": "f2_micro_selfie",
+      "model": "selfly_camera",
+      "term": 0,
+      "title": "\"Hoveralr X1 Self-Flying Camera Test Flights\" My 1st DRONE. (You WILL start to TALK to it)",
+      "duration_s": 257,
+      "frames": 129,
+      "status": "processed",
+      "attempts": 1,
+      "source": "youtube",
+      "processed_utc": "2026-10-22T10:59:44Z"
+    },
+    "xaog-B9JBv0": {
+      "url": "https://www.youtube.com/watch?v=xaog-B9JBv0",
+      "category": "f2_micro_selfie",
+      "model": "dji_flip",
+      "term": 0,
+      "title": "DJI Flip EXTREME Wind Test vs DJI Mini 4 Pro in a STORM",
+      "duration_s": 773,
+      "frames": 387,
+      "status": "processed",
+      "attempts": 1,
+      "source": "youtube",
+      "processed_utc": "2026-10-22T11:03:02Z"
+    },
+    "wfC9dSwT_Ms": {
+      "url": "https://www.youtube.com/watch?v=wfC9dSwT_Ms",
+      "category": "f2_micro_selfie",
+      "model": "hoverair_x1_pro_max",
+      "term": 0,
+      "title": "HOVERAir X1 PROMAX - Detailed review for Cycling",
+      "duration_s": 639,
+      "frames": 319,
+      "status": "processed",
+      "attempts": 1,
+      "source": "youtube",
+      "processed_utc": "2026-10-22T11:07:13Z"
+    },
+    "vlpwcUyNjno": {
+      "url": "https://www.youtube.com/watch?v=vlpwcUyNjno",
+      "category": "f2_micro_selfie",
+      "model": "zerotech_dobby",
+      "term": 0,
+      "title": "Zerotech Dobby Selfie Drone Full Review IOS Unbox RTH Target",
+      "duration_s": 816,
+      "frames": 408,
+      "status": "processed",
+      "attempts": 1,
+      "source": "youtube",
+      "processed_utc": "2026-10-22T11:09:29Z"
+    },
+    "_R0L1ekDBto": {
+      "url": "https://www.youtube.com/watch?v=_R0L1ekDBto",
+      "category": "f2_micro_selfie",
+      "model": "eachine_e58_e88",
+      "term": 0,
+      "title": "Eachine E58 720P Folding FPV Camera Drone Review Test in English",
+      "duration_s": 487,
+      "frames": 243,
+      "status": "processed",
+      "attempts": 1,
+      "source": "youtube",
+      "processed_utc": "2026-10-22T11:13:11Z"
+    },
+    "8xlFqZ1h16w": {
+      "url": "https://www.youtube.com/watch?v=8xlFqZ1h16w",
+      "category": "f2_micro_selfie",
+      "model": "airselfie_2",
+      "status": "failed",
+      "error": "ERROR: [youtube] 8xlFqZ1h16w: Requested format is not available. Use --list-formats for a list of available formats",
+      "attempts": 1,
+      "frames": 0,
+      "processed_utc": "2026-10-22T11:14:13Z"
+    },
+    "ltOEktx8eA8": {
+      "url": "https://www.youtube.com/watch?v=ltOEktx8eA8",
+      "category": "f2_micro_selfie",
+      "model": "airselfie_2",
+      "term": 0,
+      "title": "AirSelfie E03 (AS01) Selfie 1080p HD Camera Drone Flight Test Review",
+      "duration_s": 715,
+      "frames": 358,
+      "status": "processed",
+      "attempts": 1,
+      "source": "youtube",
+      "processed_utc": "2026-10-22T11:16:24Z"
     }
   },
   "sweeps": {
@@ -19479,6 +19601,38 @@
       "f2_micro_selfie/zero_zero_hover_camera_hover_2": {
         "videos": 1,
         "utc": "2026-10-22T10:52:01Z"
+      },
+      "f2_micro_selfie/hoverair_x1_promax": {
+        "videos": 1,
+        "utc": "2026-10-22T10:54:56Z"
+      },
+      "f2_micro_selfie/ryze_tello_edu": {
+        "videos": 1,
+        "utc": "2026-10-22T10:58:06Z"
+      },
+      "f2_micro_selfie/selfly_camera": {
+        "videos": 1,
+        "utc": "2026-10-22T10:59:45Z"
+      },
+      "f2_micro_selfie/dji_flip": {
+        "videos": 1,
+        "utc": "2026-10-22T11:03:03Z"
+      },
+      "f2_micro_selfie/hoverair_x1_pro_max": {
+        "videos": 1,
+        "utc": "2026-10-22T11:07:14Z"
+      },
+      "f2_micro_selfie/zerotech_dobby": {
+        "videos": 1,
+        "utc": "2026-10-22T11:09:30Z"
+      },
+      "f2_micro_selfie/eachine_e58_e88": {
+        "videos": 1,
+        "utc": "2026-10-22T11:13:12Z"
+      },
+      "f2_micro_selfie/airselfie_2": {
+        "videos": 1,
+        "utc": "2026-10-22T11:16:25Z"
       }
     }
   }

@@ -34,3 +34,4 @@ venv/
 .idea/
 .DS_Store
 *.egg-info/
+roboflow_uploaded.json
